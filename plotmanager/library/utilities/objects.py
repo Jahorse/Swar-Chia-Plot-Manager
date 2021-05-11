@@ -28,6 +28,8 @@ class Job:
     buckets = None
     memory_buffer = None
 
+    remote_destination = None
+
 
 class Work:
     work_id = None

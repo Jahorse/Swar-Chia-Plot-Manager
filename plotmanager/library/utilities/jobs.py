@@ -1,4 +1,5 @@
 import logging
+import os
 import psutil
 
 from copy import deepcopy
@@ -64,6 +65,9 @@ def load_jobs(config_jobs):
         job.threads = info['threads']
         job.buckets = info['buckets']
         job.memory_buffer = info['memory_buffer']
+
+        job.remote_destination = info.get('remote_destination', None)
+
         jobs.append(job)
 
     return jobs
@@ -162,11 +166,28 @@ def start_work(job, chia_location, log_directory):
         buckets=job.buckets,
         bitfield=job.bitfield,
     )
-    logging.info(f'Starting with plot command: {plot_command}')
+
+    if job.remote_destination is not None:
+        args = [
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                'migrateplot.sh'
+            ),
+            ' '.join(plot_command),
+            destination_directory,
+            job.remote_destination
+        ]
+    else:
+        args = plot_command
+
+    logging.info(f'Starting with plot command: {args}')
 
     log_file = open(log_file_path, 'a')
     logging.info(f'Starting process')
-    process = start_process(args=plot_command, log_file=log_file)
+    process = start_process(
+        args=args,
+        log_file=log_file
+    )
     pid = process.pid
     logging.info(f'Started process: {pid}')
 
