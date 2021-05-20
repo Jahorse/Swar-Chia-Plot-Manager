@@ -1,4 +1,5 @@
 import logging
+import os
 import psutil
 
 from copy import deepcopy
@@ -64,7 +65,7 @@ def check_valid_destinations(job, drives_free_space):
 
     return job
 
-        
+
 def load_jobs(config_jobs):
     jobs = []
     checked_job_names = []
@@ -315,11 +316,20 @@ def start_work(job, chia_location, log_directory, drives_free_space):
         bitfield=job.bitfield,
         exclude_final_directory=job.exclude_final_directory,
     )
-    logging.info(f'Starting with plot command: {plot_command}')
+
+    args = [
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'create-chia-plot.sh'
+        ),
+        ' '.join(plot_command),
+        destination_directory
+    ]
+    logging.info(f'Starting with plot command: {args}')
 
     log_file = open(log_file_path, 'a')
     logging.info(f'Starting process')
-    process = start_process(args=plot_command, log_file=log_file)
+    process = start_process(args=args, log_file=log_file)
     pid = process.pid
     logging.info(f'Started process: {pid}')
 
