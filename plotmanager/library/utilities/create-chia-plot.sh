@@ -3,27 +3,23 @@
 set -eou pipefail
 
 get_target() {
-    declare -A target_count
-
     avaiable_targets=$(cat ~/.ssh/config | grep "Host plotTarget" | grep -o "plotTarget[a-zA-Z0-9]*")
 
-    lowest_amount=1000
-    lowest_target=${avaiable_targets[0]}
-    for t in ${avaiable_targets[@]}; do
-        set +e
-        target_count[$t]=$(ps aux | grep scp | grep -v grep | grep -v /usr/bin/ssh | grep -c $t:)
-        set -e
-        if [ -z ${target_count[$t]+x} ]; then
-            target_count[$t]=0
-        fi
-
-        if (( ${target_count[$t]} < $lowest_amount )); then
-            lowest_amount=${target_count[$t]}
-            lowest_target=$t
+    while [ -z ${free_target+x} ]; do
+        for t in ${avaiable_targets[@]}; do
+            set +e
+            target_count=$(ps aux | grep scp | grep -v grep | grep -v /usr/bin/ssh | grep -c $t:)
+            set -e
+            if [ -z ${target_count+x} ] || (( $target_count == 0 )); then
+                free_target=$t
+                break
+            fi
+        done
+        if [ -z ${free_target+x} ]; then
+            sleep 10s
         fi
     done
-
-    echo $lowest_target
+    echo $free_target
 }
 
 migrate_plot() {
